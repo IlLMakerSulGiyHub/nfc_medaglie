@@ -425,11 +425,6 @@
         <i class="fa-solid fa-sparkles"></i> Lancia Coriandoli! 🎉
       </button>
     </div>
-
-    <!-- Link to generator tool -->
-    <a href="generator.html" class="btn-generator-link">
-      <i class="fa-solid fa-wand-magic-sparkles"></i> Apri Generatore di Medaglie & Scrivi NFC
-    </a>
   </div>
 
   <script>
@@ -615,6 +610,23 @@
           const tiltX = Math.min(Math.max(e.gamma, -25), 25) * 0.45;
           const tiltY = Math.min(Math.max(e.beta - 45, -25), 25) * 0.45;
           card.style.transform = `rotateX(${-tiltY}deg) rotateY(${tiltX}deg)`;
+        }
+      });
+    }
+
+    // Scorciatoia segreta admin: 3 tap/click rapidi sulla targhetta "Tag NFC Verificato" aprono il generatore
+    let pillClicks = 0;
+    let pillTimer = null;
+    const nfcPill = document.querySelector('.nfc-pill');
+    if (nfcPill) {
+      nfcPill.style.cursor = 'default';
+      nfcPill.addEventListener('click', () => {
+        pillClicks++;
+        clearTimeout(pillTimer);
+        if (pillClicks >= 3) {
+          window.location.href = 'generator.html';
+        } else {
+          pillTimer = setTimeout(() => { pillClicks = 0; }, 1000);
         }
       });
     }
