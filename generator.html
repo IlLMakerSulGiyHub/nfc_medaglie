@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generatore Link & NFC Medaglie 3D</title>
+  <!-- Google Fonts & FontAwesome -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- QRCode.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #090B10;
+      --card-bg: rgba(22, 27, 34, 0.7);
+      --border: rgba(255, 255, 255, 0.1);
+      --accent: #38BDF8;
+      --accent-hover: #0EA5E9;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.08), transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.08), transparent 40%);
+      color: #F8FAFC;
+      min-height: 100vh;
+      padding: 30px 20px;
+    }
+
+    .container {
+      max-width: 1050px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      margin-bottom: 35px;
+    }
+
+    .badge-top {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: #38BDF8;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 10px;
+    }
+
+    header p {
+      color: #94A3B8;
+      max-width: 600px;
+      margin: 0 auto;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
+    /* Layout Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+    }
+
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 26px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+
+    .panel-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #FFFFFF;
+    }
+
+    .panel-title i {
+      color: var(--accent);
+    }
+
+    /* Form Fields */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #CBD5E1;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      padding: 11px 14px;
+      color: #FFFFFF;
+      font-size: 0.95rem;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: rgba(15, 23, 42, 0.95);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    /* Presets Buttons */
+    .presets-box {
+      margin-bottom: 20px;
+    }
+
+    .preset-btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .btn-preset {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 6px 12px;
+      color: #CBD5E1;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-preset:hover {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--accent);
+      color: #FFFFFF;
+    }
+
+    /* Output / QR / NFC Box */
+    .qr-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 20px 10px;
+    }
+
+    #qrcode {
+      background: #FFFFFF;
+      padding: 14px;
+      border-radius: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+      display: inline-block;
+    }
+
+    .qr-hint {
+      font-size: 0.85rem;
+      color: #94A3B8;
+      margin-bottom: 20px;
+    }
+
+    /* URL Box */
+    .url-box {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 0.82rem;
+      color: #38BDF8;
+      word-break: break-all;
+      margin-bottom: 16px;
+      max-height: 80px;
+      overflow-y: auto;
+    }
+
+    .action-btns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .btn {
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-accent {
+      background: linear-gradient(135deg, var(--accent) 0%, #0284C7 100%);
+      color: #04101E;
+    }
+    .btn-accent:hover { filter: brightness(1.1); }
+
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.06);
+      color: #F8FAFC;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .btn-outline:hover { background: rgba(255, 255, 255, 0.12); }
+
+    /* NFC Writing Guide Box */
+    .nfc-guide {
+      background: rgba(56, 189, 248, 0.05);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 14px;
+      padding: 18px;
+      margin-top: 15px;
+    }
+
+    .nfc-guide h3 {
+      font-size: 0.95rem;
+      color: #38BDF8;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nfc-guide ol {
+      padding-left: 20px;
+      font-size: 0.84rem;
+      color: #CBD5E1;
+      line-height: 1.6;
+    }
+
+    .nfc-guide ol li {
+      margin-bottom: 5px;
+    }
+
+    .nfc-guide code {
+      background: rgba(0,0,0,0.4);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #F1F5F9;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <div class="badge-top">
+        <i class="fa-solid fa-nfc-symbol"></i> Prototipo Zero-Database
+      </div>
+      <h1>Generatore Medaglie NFC 3D</h1>
+      <p>Crea le informazioni della medaglia, ottieni il link istantaneo e genera il QR code da testare con il tuo smartphone o da scrivere su un tag NFC.</p>
+    </header>
+
+    <div class="grid">
+      <!-- Left Panel: Form Input -->
+      <div class="panel">
+        <div class="panel-title">
+          <i class="fa-solid fa-sliders"></i> Dati della Medaglia
+        </div>
+
+        <!-- Preset Buttons -->
+        <div class="presets-box">
+          <label>Carica Esempio Rapido:</label>
+          <div class="preset-btns">
+            <button type="button" class="btn-preset" onclick="loadPreset('archery')">🏹 Tiro con l'Arco</button>
+            <button type="button" class="btn-preset" onclick="loadPreset('maratona')">🏃 Corsa / Atletica</button>
+            <button type="button" class="btn-preset" onclick="loadPreset('nuoto')">🏊 Nuoto</button>
+            <button type="button" class="btn-preset" onclick="loadPreset('ciclismo')">🚴 Ciclismo</button>
+            <button type="button" class="btn-preset" onclick="loadPreset('calcio')">⚽ Calcio</button>
+            <button type="button" class="btn-preset" onclick="loadPreset('padel')">🎾 Padel / Tennis</button>
+            <button type="button" class="btn-preset" onclick="loadPreset('artimarziali')">🥋 Arti Marziali</button>
+            <button type="button" class="btn-preset" onclick="loadPreset('hackathon')">💻 Hackathon Tech</button>
+            <button type="button" class="btn-preset" onclick="loadPreset('laurea')">🎓 Laurea / Ricordo</button>
+          </div>
+        </div>
+
+        <form id="medalForm">
+          <div class="form-group">
+            <label for="name">Nome Partecipante / Vincitore</label>
+            <input type="text" id="name" value="Chiara Bellini" placeholder="Es. Marco Rossi" required>
+          </div>
+
+          <div class="form-group">
+            <label for="event">Nome Evento / Competizione</label>
+            <input type="text" id="event" value="Campionato Italiano Tiro con l'Arco 2026" placeholder="Es. Torneo Nazionale" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="sport">Disciplina / Sport</label>
+              <select id="sport">
+                <option value="archery" selected>🏹 Tiro con l'Arco</option>
+                <option value="running">🏃 Corsa / Atletica</option>
+                <option value="swimming">🏊 Nuoto</option>
+                <option value="cycling">🚴 Ciclismo</option>
+                <option value="football">⚽ Calcio / Calcetto</option>
+                <option value="basketball">🏀 Basket</option>
+                <option value="tennis">🎾 Padel / Tennis</option>
+                <option value="martial_arts">🥋 Arti Marziali / Judo / Karate</option>
+                <option value="climbing">🧗 Arrampicata</option>
+                <option value="chess">♟️ Scacchi</option>
+                <option value="generic">🏆 Medaglia Tradizionale</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="type">Stile / Materiale Medaglia</label>
+              <select id="type">
+                <option value="gold" selected>🥇 Oro</option>
+                <option value="silver">🥈 Argento</option>
+                <option value="bronze">🥉 Bronzo</option>
+                <option value="cyber">⚡ Cyber Neon</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="rank">Premio / Posizione</label>
+            <input type="text" id="rank" value="1° Classificato - Oro" placeholder="Es. 1° Posto Oro">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="date">Data Evento</label>
+              <input type="text" id="date" value="21/09/2026" placeholder="GG/MM/AAAA">
+            </div>
+            <div class="form-group">
+              <label for="time">Tempo o Punteggio (opzionale)</label>
+              <input type="text" id="time" value="01:24:18" placeholder="Es. 01:24:18 o 120 Punti">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cat">Categoria (opzionale)</label>
+              <input type="text" id="cat" value="Assoluti Maschile" placeholder="Es. Master 35">
+            </div>
+            <div class="form-group">
+              <label for="cert">Codice Seriale / Chip ID</label>
+              <input type="text" id="cert" value="MED-8924" placeholder="Es. NFC-001">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="msg">Dedica o Messaggio Personalizzato</label>
+            <textarea id="msg" rows="2" placeholder="Messaggio motivazionale o di congratulazioni">Con determinazione e straordinario spirito hai conquistato il gradino più alto del podio!</textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="baseUrl">Indirizzo Base Pagina Web (Host)</label>
+            <input type="text" id="baseUrl" value="" placeholder="Lascia vuoto per rilevare automaticamente">
+          </div>
+        </form>
+      </div>
+
+      <!-- Right Panel: Live QR & NFC link -->
+      <div class="panel">
+        <div class="panel-title">
+          <i class="fa-solid fa-qrcode"></i> Test Immediato & Link NFC
+        </div>
+
+        <div class="qr-container">
+          <div id="qrcode"></div>
+          <p class="qr-hint">
+            <i class="fa-solid fa-camera"></i> Inquadra questo codice con la fotocamera del tuo smartphone per vedere subito la medaglia!
+          </p>
+
+          <div class="url-box" id="urlDisplay">Generazione link in corso...</div>
+
+          <div class="action-btns" style="width: 100%;">
+            <button class="btn btn-accent" id="copyUrlBtn">
+              <i class="fa-regular fa-copy"></i> Copia Link
+            </button>
+            <a href="#" target="_blank" class="btn btn-outline" id="openPreviewBtn">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i> Apri Pagina
+            </a>
+          </div>
+        </div>
+
+        <!-- Guida Pratica NFC -->
+        <div class="nfc-guide">
+          <h3><i class="fa-solid fa-microchip"></i> Come Scrivere il Link nel Tag NFC:</h3>
+          <ol>
+            <li>Scarica l'app gratuita <strong>NFC Tools</strong> (disponibile per Android e iPhone).</li>
+            <li>Apri l'app e tocca <code>Scrivi</code> (Write) ➔ <code>Aggiungi un record</code>.</li>
+            <li>Seleziona <strong>URL / Web</strong> e incolla il link copiato qui sopra.</li>
+            <li>Tocca <code>Scrivi</code> e avvicina la medaglia stampata in 3D al retro del telefono. <strong>Fatto!</strong></li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Inizializza URL base automatico
+    let defaultOrigin = window.location.origin === "null" || window.location.protocol === "file:"
+      ? "http://192.168.1.51:3000"
+      : window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+    
+    // Se aperto su localhost/127.0.0.1, imposta l'IP LAN per consentire allo smartphone connesso al Wi-Fi di aprirlo!
+    if (defaultOrigin.includes('localhost') || defaultOrigin.includes('127.0.0.1')) {
+      defaultOrigin = defaultOrigin.replace('localhost', '192.168.1.51').replace('127.0.0.1', '192.168.1.51');
+    }
+
+    document.getElementById('baseUrl').value = defaultOrigin;
+
+    let qrCodeInstance = null;
+
+    function buildUrl() {
+      let base = document.getElementById('baseUrl').value.trim();
+      if (!base) base = defaultOrigin;
+      if (!base.endsWith('/index.html') && !base.endsWith('/')) {
+        base += '/index.html';
+      } else if (base.endsWith('/')) {
+        base += 'index.html';
+      }
+
+      const params = new URLSearchParams();
+      params.set('nome', document.getElementById('name').value.trim());
+      params.set('evento', document.getElementById('event').value.trim());
+      params.set('premio', document.getElementById('rank').value.trim());
+      params.set('sport', document.getElementById('sport').value);
+      params.set('tipo', document.getElementById('type').value);
+      params.set('data', document.getElementById('date').value.trim());
+
+      const time = document.getElementById('time').value.trim();
+      if (time) params.set('tempo', time);
+
+      const cat = document.getElementById('cat').value.trim();
+      if (cat) params.set('cat', cat);
+
+      const cert = document.getElementById('cert').value.trim();
+      if (cert) params.set('id', cert);
+
+      const msg = document.getElementById('msg').value.trim();
+      if (msg) params.set('dedica', msg);
+
+      return `${base}?${params.toString()}`;
+    }
+
+    function updatePreview() {
+      const fullUrl = buildUrl();
+      document.getElementById('urlDisplay').textContent = fullUrl;
+      document.getElementById('openPreviewBtn').href = fullUrl;
+
+      // Aggiorna QR Code
+      const qrEl = document.getElementById('qrcode');
+      qrEl.innerHTML = '';
+      qrCodeInstance = new QRCode(qrEl, {
+        text: fullUrl,
+        width: 170,
+        height: 170,
+        colorDark: "#090B10",
+        colorLight: "#FFFFFF",
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }
+
+    // Ascolto modifiche al form
+    document.getElementById('medalForm').addEventListener('input', updatePreview);
+
+    // Copia Link
+    document.getElementById('copyUrlBtn').addEventListener('click', () => {
+      const url = buildUrl();
+      navigator.clipboard.writeText(url).then(() => {
+        const btn = document.getElementById('copyUrlBtn');
+        const origText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Copiato!';
+        setTimeout(() => { btn.innerHTML = origText; }, 2000);
+      });
+    });
+
+    // Presets
+    const presets = {
+      archery: {
+        name: 'Chiara Bellini',
+        event: 'Campionato Italiano Tiro con l\'Arco 2026',
+        sport: 'archery',
+        rank: '1° Posto - Medaglia d\'Oro',
+        type: 'gold',
+        date: '28/09/2026',
+        time: '714 / 720 pt (38x 10s)',
+        cat: 'Arco Compound Senior F',
+        cert: 'ARCHERY-ITA-2026',
+        msg: 'Precisione millimetrica e concentrazione assoluta: centro perfetto a ogni volée!'
+      },
+      maratona: {
+        name: 'Marco Rossi',
+        event: 'Maratona d\'Autunno 2026',
+        sport: 'running',
+        rank: '1° Classificato Assoluto',
+        type: 'gold',
+        date: '21/09/2026',
+        time: '01:24:18',
+        cat: 'Assoluti Maschile',
+        cert: 'MARATONA-001',
+        msg: 'Straordinaria prestazione! Hai dominato la gara fino all\'ultimo chilometro.'
+      },
+      nuoto: {
+        name: 'Federico Neri',
+        event: 'Trofeo Nazionale Nuoto in Vasca',
+        sport: 'swimming',
+        rank: 'Medaglia d\'Oro 100m Stile',
+        type: 'gold',
+        date: '12/10/2026',
+        time: '47.92s (Record Gara)',
+        cat: 'Categoria Cadetti',
+        cert: 'SWIM-REC-99',
+        msg: 'Velocità pura e bracciate perfette: nuovo record della manifestazione!'
+      },
+      ciclismo: {
+        name: 'Luca Moretti',
+        event: 'Granfondo delle Dolomiti 2026',
+        sport: 'cycling',
+        rank: 'Finisher Top 10',
+        type: 'silver',
+        date: '04/10/2026',
+        time: '04:12:45 (135 km)',
+        cat: 'Master 40',
+        cert: 'BIKE-GF-774',
+        msg: 'Scalatore indomabile sui passi alpini: una prova di forza epica!'
+      },
+      calcio: {
+        name: 'Lorenzo Gatti',
+        event: 'Torneo Interregionale Futsal Cup',
+        sport: 'football',
+        rank: 'Miglior Giocatore (MVP)',
+        type: 'gold',
+        date: '18/10/2026',
+        time: '12 Goal nel Torneo',
+        cat: 'Campionato Under 21',
+        cert: 'CALCIO-MVP-10',
+        msg: 'Leader in campo, visione di gioco e capocannoniere assoluto del torneo.'
+      },
+      padel: {
+        name: 'Alessandro & Matteo',
+        event: 'Padel Cup Winter 2026',
+        sport: 'tennis',
+        rank: 'Campioni del Torneo',
+        type: 'silver',
+        date: '15/10/2026',
+        time: 'Set 6-3, 7-5',
+        cat: 'Doppio Maschile Open',
+        cert: 'PADEL-GOLD-44',
+        msg: 'Intesa perfetta sul campo e rimonta memorabile in finale!'
+      },
+      artimarziali: {
+        name: 'Sofia De Luca',
+        event: 'Campionato Nazionale Karate Kumite',
+        sport: 'martial_arts',
+        rank: 'Cintura Nera - 1° Posto',
+        type: 'gold',
+        date: '25/10/2026',
+        time: 'Vittoria per Ippon',
+        cat: 'Senior -60kg',
+        cert: 'DOJO-GOLD-09',
+        msg: 'Disciplina, rispetto e tecnica impeccabile: trionfo assoluto sul tatami!'
+      },
+      hackathon: {
+        name: 'Team Innovators',
+        event: 'AI & Robotics Hackathon',
+        sport: 'hackathon',
+        rank: 'Best Hardware Project',
+        type: 'cyber',
+        date: '05/11/2026',
+        time: 'Score: 98/100',
+        cat: 'Open Innovation',
+        cert: 'HACK-CYBER-88',
+        msg: 'Per aver sviluppato una soluzione pionieristica tra AI, NFC e stampa 3D!'
+      },
+      laurea: {
+        name: 'Dott.ssa Giulia Bianchi',
+        event: 'Laurea in Ingegneria Meccatronica',
+        sport: 'laurea',
+        rank: '110 e Lode con Menzione',
+        type: 'bronze',
+        date: '18/07/2026',
+        time: '',
+        cat: 'Ingegneria Industriale',
+        cert: 'LAUREA-GIULIA-26',
+        msg: 'Orgogliosi di te e del tuo straordinario percorso accademico. Ad maiora semper!'
+      }
+    };
+
+    function loadPreset(key) {
+      const p = presets[key];
+      if (!p) return;
+      document.getElementById('name').value = p.name;
+      document.getElementById('event').value = p.event;
+      document.getElementById('rank').value = p.rank;
+      if (p.sport) document.getElementById('sport').value = p.sport;
+      document.getElementById('type').value = p.type;
+      document.getElementById('date').value = p.date;
+      document.getElementById('time').value = p.time;
+      document.getElementById('cat').value = p.cat;
+      document.getElementById('cert').value = p.cert;
+      document.getElementById('msg').value = p.msg;
+      updatePreview();
+    }
+
+    // Avvio iniziale
+    window.addEventListener('DOMContentLoaded', () => {
+      updatePreview();
+    });
+  </script>
+</body>
+</html>

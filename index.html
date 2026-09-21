@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Medaglia Interattiva NFC</title>
+  <!-- Google Fonts & FontAwesome -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <style>
+    :root {
+      --bg-dark: #0a0b10;
+      --card-bg: rgba(22, 27, 34, 0.75);
+      --gold-1: #FFE082;
+      --gold-2: #FFB300;
+      --gold-3: #FF8F00;
+      --gold-glow: rgba(255, 179, 0, 0.4);
+      --silver-1: #F5F7FA;
+      --silver-2: #B0BEC5;
+      --silver-3: #78909C;
+      --silver-glow: rgba(176, 190, 197, 0.4);
+      --bronze-1: #FFCCBC;
+      --bronze-2: #D87A56;
+      --bronze-3: #8D4024;
+      --bronze-glow: rgba(216, 122, 86, 0.4);
+      --cyber-1: #00F5D4;
+      --cyber-2: #7B2CBF;
+      --cyber-glow: rgba(0, 245, 212, 0.4);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 50% 15%, rgba(120, 80, 255, 0.15), transparent 60%),
+        radial-gradient(circle at 80% 80%, rgba(255, 140, 0, 0.1), transparent 50%),
+        radial-gradient(circle at 20% 90%, rgba(0, 245, 212, 0.08), transparent 50%);
+      color: #FFFFFF;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 16px 40px;
+      overflow-x: hidden;
+      perspective: 1000px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* NFC Badge Chip Indicator */
+    .nfc-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(12px);
+      padding: 7px 16px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: #A0AEC0;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      animation: pulsePill 2.5s infinite ease-in-out;
+    }
+
+    .nfc-pill i {
+      color: #00F5D4;
+      font-size: 0.95rem;
+    }
+
+    @keyframes pulsePill {
+      0%, 100% { transform: scale(1); opacity: 0.9; }
+      50% { transform: scale(1.03); opacity: 1; border-color: rgba(0, 245, 212, 0.4); }
+    }
+
+    /* 3D Interactive Medal Card */
+    .medal-card-wrapper {
+      width: 100%;
+      perspective: 1200px;
+      margin-bottom: 24px;
+    }
+
+    .medal-card {
+      position: relative;
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 28px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 34px 24px 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      transition: transform 0.2s cubic-bezier(0.2, 0, 0.3, 1), box-shadow 0.2s ease;
+      transform-style: preserve-3d;
+      overflow: hidden;
+    }
+
+    /* Glossy reflection effect */
+    .medal-card::before {
+      content: '';
+      position: absolute;
+      top: -60%;
+      left: -60%;
+      width: 220%;
+      height: 220%;
+      background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 60%);
+      pointer-events: none;
+      transform: rotate(35deg);
+    }
+
+    /* Medal Icon Badge */
+    .medal-graphic-container {
+      position: relative;
+      width: 130px;
+      height: 130px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .medal-ring-glow {
+      position: absolute;
+      inset: -10px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--gold-glow) 20%, transparent 70%);
+      filter: blur(12px);
+      animation: glowFloat 4s ease-in-out infinite alternate;
+    }
+
+    @keyframes glowFloat {
+      0% { transform: scale(0.9); opacity: 0.6; }
+      100% { transform: scale(1.15); opacity: 1; }
+    }
+
+    .medal-disc {
+      position: relative;
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold-1) 0%, var(--gold-2) 50%, var(--gold-3) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 
+        0 10px 25px rgba(0,0,0,0.5),
+        inset 0 3px 6px rgba(255,255,255,0.7),
+        inset 0 -4px 8px rgba(0,0,0,0.4);
+      border: 3px solid rgba(255, 255, 255, 0.4);
+      animation: floatDisc 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes floatDisc {
+      0% { transform: translateY(0px) rotate(0deg); }
+      100% { transform: translateY(-6px) rotate(2deg); }
+    }
+
+    .medal-disc i {
+      font-size: 3.2rem;
+      color: #3e2600;
+      text-shadow: 0 1px 2px rgba(255,255,255,0.4);
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    }
+
+    /* Dynamic themes */
+    .theme-silver .medal-disc {
+      background: linear-gradient(135deg, var(--silver-1) 0%, var(--silver-2) 50%, var(--silver-3) 100%);
+    }
+    .theme-silver .medal-ring-glow { background: radial-gradient(circle, var(--silver-glow) 20%, transparent 70%); }
+    .theme-silver .medal-disc i { color: #1e293b; }
+
+    .theme-bronze .medal-disc {
+      background: linear-gradient(135deg, var(--bronze-1) 0%, var(--bronze-2) 50%, var(--bronze-3) 100%);
+    }
+    .theme-bronze .medal-ring-glow { background: radial-gradient(circle, var(--bronze-glow) 20%, transparent 70%); }
+    .theme-bronze .medal-disc i { color: #35150a; }
+
+    .theme-cyber .medal-disc {
+      background: linear-gradient(135deg, #00F5D4 0%, #7B2CBF 100%);
+    }
+    .theme-cyber .medal-ring-glow { background: radial-gradient(circle, var(--cyber-glow) 20%, transparent 70%); }
+    .theme-cyber .medal-disc i { color: #FFFFFF; }
+
+    /* Typography inside Card */
+    .event-tag {
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #94A3B8;
+      margin-bottom: 6px;
+    }
+
+    .medal-rank {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.85rem;
+      font-weight: 700;
+      color: #FFFFFF;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+
+    .recipient-name {
+      font-size: 1.5rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, #FFFFFF, #E2E8F0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 14px;
+    }
+
+    .custom-message {
+      font-size: 0.95rem;
+      color: #CBD5E1;
+      line-height: 1.5;
+      margin-bottom: 22px;
+      padding: 0 10px;
+      font-style: italic;
+    }
+
+    /* Meta Grid (Data, Tempo, Serial) */
+    .meta-grid {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .meta-item {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 14px;
+      padding: 10px 8px;
+    }
+
+    .meta-label {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #64748B;
+      margin-bottom: 4px;
+      font-weight: 700;
+    }
+
+    .meta-value {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #F8FAFC;
+    }
+
+    /* Authentic Certificate Bar */
+    .cert-badge {
+      width: 100%;
+      border-top: 1px dashed rgba(255, 255, 255, 0.12);
+      padding-top: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.76rem;
+      color: #64748B;
+    }
+
+    .cert-id {
+      font-family: monospace;
+      font-size: 0.85rem;
+      color: #38BDF8;
+      font-weight: bold;
+    }
+
+    /* Action Buttons */
+    .button-group {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 16px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+      color: #FFFFFF;
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
+    }
+    .btn-primary:active { transform: scale(0.98); }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: #E2E8F0;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .btn-secondary:hover { background: rgba(255, 255, 255, 0.14); }
+
+    .btn-generator-link {
+      margin-top: 20px;
+      font-size: 0.82rem;
+      color: #94A3B8;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      transition: color 0.2s;
+    }
+    .btn-generator-link:hover { color: #38BDF8; }
+
+    /* Audio / Sound indicator */
+    .tap-hint {
+      font-size: 0.75rem;
+      color: #64748B;
+      margin-top: 10px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- NFC Status indicator -->
+    <div class="nfc-pill">
+      <i class="fa-solid fa-satellite-dish"></i>
+      <span>Tag NFC Verificato</span>
+    </div>
+
+    <!-- 3D Interactive Card -->
+    <div class="medal-card-wrapper" id="cardWrapper">
+      <div class="medal-card" id="medalCard">
+        
+        <!-- Rotating Medal Disc -->
+        <div class="medal-graphic-container">
+          <div class="medal-ring-glow" id="medalGlow"></div>
+          <div class="medal-disc" id="medalDisc">
+            <i class="fa-solid fa-medal" id="medalIcon"></i>
+          </div>
+        </div>
+
+        <!-- Event & Rank -->
+        <div class="event-tag" id="eventTag">Maratona d'Autunno 2026</div>
+        <h1 class="medal-rank" id="medalRank">1° Classificato Oro</h1>
+        <div class="recipient-name" id="recipientName">Marco Rossi</div>
+        
+        <p class="custom-message" id="customMsg">
+          "Con determinazione, tenacia e straordinario spirito sportivo hai conquistato il gradino più alto del podio!"
+        </p>
+
+        <!-- Dynamic Meta Grid -->
+        <div class="meta-grid" id="metaGrid">
+          <div class="meta-item" id="dateBox">
+            <div class="meta-label">Data</div>
+            <div class="meta-value" id="metaDate">21 Set 2026</div>
+          </div>
+          <div class="meta-item" id="timeBox">
+            <div class="meta-label">Tempo / Score</div>
+            <div class="meta-value" id="metaTime">01:24:18</div>
+          </div>
+          <div class="meta-item" id="categoryBox">
+            <div class="meta-label">Categoria</div>
+            <div class="meta-value" id="metaCategory">Assoluti M</div>
+          </div>
+        </div>
+
+        <!-- Certificate of Authenticity -->
+        <div class="cert-badge">
+          <div><i class="fa-solid fa-shield-halved" style="color: #10B981; margin-right: 5px;"></i> Autenticato da Chip NFC</div>
+          <div class="cert-id" id="certId">#MED-8924</div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="tap-hint">
+      <i class="fa-solid fa-mobile-screen"></i> Muovi o inclina lo smartphone per ammirare l'effetto 3D
+    </div>
+
+    <!-- Actions -->
+    <div class="button-group" style="margin-top: 20px;">
+      <button class="btn btn-primary" id="shareBtn">
+        <i class="fa-solid fa-share-nodes"></i> Condividi Traguardo
+      </button>
+      <button class="btn btn-secondary" id="celebrateBtn">
+        <i class="fa-solid fa-sparkles"></i> Lancia Coriandoli! 🎉
+      </button>
+    </div>
+
+    <!-- Link to generator tool -->
+    <a href="generator.html" class="btn-generator-link">
+      <i class="fa-solid fa-wand-magic-sparkles"></i> Apri Generatore di Medaglie & Scrivi NFC
+    </a>
+  </div>
+
+  <script>
+    // --- URL PARAMETERS PARSER (Senza Database!) ---
+    function getParams() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return {
+        name: urlParams.get('nome') || urlParams.get('name') || 'Marco Rossi',
+        event: urlParams.get('evento') || urlParams.get('event') || 'Gran Premio 3D 2026',
+        rank: urlParams.get('premio') || urlParams.get('rank') || '1° Posto Assoluto',
+        sport: (urlParams.get('sport') || urlParams.get('disciplina') || '').toLowerCase(),
+        type: (urlParams.get('tipo') || urlParams.get('type') || 'gold').toLowerCase(),
+        date: urlParams.get('data') || urlParams.get('date') || '21/09/2026',
+        time: urlParams.get('tempo') || urlParams.get('time') || '',
+        cat: urlParams.get('cat') || urlParams.get('categoria') || '',
+        msg: urlParams.get('msg') || urlParams.get('dedica') || 'Congratulazioni per il fantastico risultato!',
+        cert: urlParams.get('id') || urlParams.get('cert') || 'NFC-3D-' + Math.floor(1000 + Math.random() * 9000)
+      };
+    }
+
+    const data = getParams();
+
+    // Mapping icone per sport e discipline
+    function getSportIcon(sport) {
+      switch (sport) {
+        case 'archery':
+        case 'arco':
+        case 'tiro_arco':
+          return 'fa-solid fa-bullseye';
+        case 'swimming':
+        case 'nuoto':
+          return 'fa-solid fa-person-swimming';
+        case 'cycling':
+        case 'ciclismo':
+        case 'bici':
+          return 'fa-solid fa-bicycle';
+        case 'running':
+        case 'corsa':
+        case 'atletica':
+        case 'maratona':
+          return 'fa-solid fa-person-running';
+        case 'football':
+        case 'calcio':
+          return 'fa-solid fa-futbol';
+        case 'basketball':
+        case 'basket':
+          return 'fa-solid fa-basketball';
+        case 'tennis':
+        case 'padel':
+          return 'fa-solid fa-table-tennis-paddle-ball';
+        case 'martial_arts':
+        case 'karate':
+        case 'judo':
+          return 'fa-solid fa-hand-fist';
+        case 'climbing':
+        case 'arrampicata':
+          return 'fa-solid fa-mountain';
+        case 'chess':
+        case 'scacchi':
+          return 'fa-solid fa-chess-knight';
+        case 'gaming':
+        case 'esports':
+          return 'fa-solid fa-gamepad';
+        case 'hackathon':
+        case 'code':
+          return 'fa-solid fa-laptop-code';
+        case 'graduation':
+        case 'laurea':
+          return 'fa-solid fa-graduation-cap';
+        default:
+          return null;
+      }
+    }
+
+    // Aggiornamento DOM
+    document.getElementById('recipientName').textContent = data.name;
+    document.getElementById('eventTag').textContent = data.event;
+    document.getElementById('medalRank').textContent = data.rank;
+    document.getElementById('customMsg').textContent = `"${data.msg}"`;
+    document.getElementById('metaDate').textContent = data.date;
+    document.getElementById('certId').textContent = '#' + data.cert;
+
+    if (data.time) {
+      document.getElementById('metaTime').textContent = data.time;
+    } else {
+      document.getElementById('timeBox').style.display = 'none';
+    }
+
+    if (data.cat) {
+      document.getElementById('metaCategory').textContent = data.cat;
+    } else {
+      document.getElementById('categoryBox').style.display = 'none';
+    }
+
+    // Gestione Tema Medaglia (Oro, Argento, Bronzo, Cyber)
+    const card = document.getElementById('medalCard');
+    const icon = document.getElementById('medalIcon');
+    
+    if (data.type === 'silver' || data.type === 'argento') {
+      card.classList.add('theme-silver');
+    } else if (data.type === 'bronze' || data.type === 'bronzo') {
+      card.classList.add('theme-bronze');
+    } else if (data.type === 'cyber') {
+      card.classList.add('theme-cyber');
+    }
+
+    // Selezione icona (sport prioritario, altrimenti icona del premio)
+    const sportIcon = getSportIcon(data.sport);
+    if (sportIcon) {
+      icon.className = sportIcon;
+    } else if (data.type === 'silver' || data.type === 'argento') {
+      icon.className = 'fa-solid fa-award';
+    } else if (data.type === 'bronze' || data.type === 'bronzo') {
+      icon.className = 'fa-solid fa-shield-heart';
+    } else if (data.type === 'cyber') {
+      icon.className = 'fa-solid fa-trophy';
+    } else {
+      icon.className = 'fa-solid fa-medal';
+    }
+
+    // Coriandoli automatici al caricamento
+    window.addEventListener('load', () => {
+      triggerConfetti();
+    });
+
+    function triggerConfetti() {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 70,
+          spread: 60,
+          origin: { y: 0.6 },
+          colors: data.type === 'silver' ? ['#ffffff', '#b0bec5', '#78909c'] :
+                  data.type === 'bronze' ? ['#ffccbc', '#d87a56', '#8d4024'] :
+                  data.type === 'cyber' ? ['#00f5d4', '#7b2cbf', '#f72585'] :
+                  ['#ffe082', '#ffb300', '#ff8f00', '#ffffff']
+        });
+      }
+    }
+
+    document.getElementById('celebrateBtn').addEventListener('click', () => {
+      triggerConfetti();
+    });
+
+    // Condivisione Web Share API
+    document.getElementById('shareBtn').addEventListener('click', async () => {
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: `Medaglia: ${data.rank} - ${data.name}`,
+            text: `Guarda la mia medaglia 3D interattiva per "${data.event}"!`,
+            url: window.location.href
+          });
+        } catch (err) {
+          console.log('Share dismissed');
+        }
+      } else {
+        navigator.clipboard.writeText(window.location.href);
+        alert('Link copiato negli appunti! Puoi inviarlo a chi vuoi.');
+      }
+    });
+
+    // Effetto 3D Tilt con Gyroscope dello smartphone o Mouse su desktop
+    const wrapper = document.getElementById('cardWrapper');
+    
+    // Desktop mouse tilt
+    wrapper.addEventListener('mousemove', (e) => {
+      const rect = wrapper.getBoundingClientRect();
+      const x = e.clientX - rect.left - rect.width / 2;
+      const y = e.clientY - rect.top - rect.height / 2;
+      const rotateX = -(y / (rect.height / 2)) * 14;
+      const rotateY = (x / (rect.width / 2)) * 14;
+      card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+    });
+
+    wrapper.addEventListener('mouseleave', () => {
+      card.style.transform = 'rotateX(0deg) rotateY(0deg)';
+    });
+
+    // Mobile Gyroscope tilt
+    if (window.DeviceOrientationEvent) {
+      window.addEventListener('deviceorientation', (e) => {
+        if (e.gamma !== null && e.beta !== null) {
+          const tiltX = Math.min(Math.max(e.gamma, -25), 25) * 0.45;
+          const tiltY = Math.min(Math.max(e.beta - 45, -25), 25) * 0.45;
+          card.style.transform = `rotateX(${-tiltY}deg) rotateY(${tiltX}deg)`;
+        }
+      });
+    }
+  </script>
+</body>
+</html>
